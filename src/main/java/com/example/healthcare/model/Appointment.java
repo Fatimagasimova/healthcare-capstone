@@ -1,6 +1,9 @@
 package com.example.healthcare.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.NotNull;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -10,7 +13,9 @@ public class Appointment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private LocalDateTime date;
+    @NotNull
+    @Future
+    private LocalDateTime appointmentTime;
 
     private String reason;
 
@@ -28,8 +33,8 @@ public class Appointment {
         return id;
     }
 
-    public LocalDateTime getDate() {
-        return date;
+    public LocalDateTime getAppointmentTime() {
+        return appointmentTime;
     }
 
     public String getReason() {
@@ -48,8 +53,8 @@ public class Appointment {
         this.id = id;
     }
 
-    public void setDate(LocalDateTime date) {
-        this.date = date;
+    public void setAppointmentTime(LocalDateTime appointmentTime) {
+        this.appointmentTime = appointmentTime;
     }
 
     public void setReason(String reason) {

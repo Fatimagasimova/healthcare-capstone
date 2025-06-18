@@ -9,7 +9,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/patients")
-public class PatientController {
+public class PrescriptionController {
 
     @Autowired
     private PatientRepository patientRepository;
