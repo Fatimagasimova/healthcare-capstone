@@ -7,10 +7,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/doctors")
+@RequestMapping("/api")
 public class DoctorController {
 
     private final DoctorService doctorService;
@@ -21,28 +23,34 @@ public class DoctorController {
         this.tokenUtil = tokenUtil;
     }
 
-    @GetMapping
+    @GetMapping("/doctors")
     public List<Doctor> getAllDoctors() {
         return doctorService.getAllDoctors();
     }
 
-    @PostMapping
+    @PostMapping("/doctors")
     public Doctor createDoctor(@RequestBody Doctor doctor) {
         return doctorService.createDoctor(doctor);
     }
 
-    @GetMapping("/{id}/availability")
+    @GetMapping("/{role}/doctor/{doctorId}/availability/{date}/{token}")
     public ResponseEntity<?> getDoctorAvailability(
-            @PathVariable Long id,
-            @RequestParam("date") String date,
-            @RequestHeader("Authorization") String authHeader
+            @PathVariable String role,
+            @PathVariable Long doctorId,
+            @PathVariable String date,
+            @PathVariable String token
     ) {
-        String token = authHeader.replace("Bearer ", "");
         if (!tokenUtil.validateToken(token)) {
             return ResponseEntity.status(401).body("Invalid token");
         }
 
-        List<String> availableTimes = doctorService.getAvailableTimes(id, LocalDate.parse(date));
-        return ResponseEntity.ok(availableTimes);
+        List<String> availableTimes = doctorService.getAvailableTimes(doctorId, LocalDate.parse(date));
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("doctorId", doctorId);
+        response.put("date", date);
+        response.put("availableTimes", availableTimes);
+
+        return ResponseEntity.ok(response);
     }
 }

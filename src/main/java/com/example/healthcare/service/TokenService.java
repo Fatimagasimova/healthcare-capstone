@@ -1,30 +1,41 @@
 package com.example.healthcare.service;
 
-import com.example.healthcare.util.TokenUtil;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import java.security.Key;
+import java.util.Date;
 
 @Service
 public class TokenService {
 
-    private final TokenUtil tokenUtil;
+    @Value("${jwt.secret}")
+    private String jwtSecret;
 
-    public TokenService(TokenUtil tokenUtil) {
-        this.tokenUtil = tokenUtil;
-    }
+    @Value("${jwt.expiration}") // millisaniyələrlə vaxt (məs: 3600000 = 1 saat)
+    private long jwtExpiration;
 
+    // ✅ Token yaradılması: Jwts.builder() və username + role daxil edilərək
     public String generateToken(String username, String role) {
-        return tokenUtil.generateToken(username, role);
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtExpiration);
+
+        return Jwts.builder()
+                .setSubject(username)
+                .claim("role", role)
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
     }
 
-    public boolean validateToken(String token) {
-        return tokenUtil.validateToken(token);
+    // ✅ Token imzalama üçün açar
+    private Key getSigningKey() {
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
-    public String getUsernameFromToken(String token) {
-        return tokenUtil.extractUsername(token);
-    }
-
-    public String getUserRoleFromToken(String token) {
-        return tokenUtil.extractUserRole(token);
-    }
+    // Burada əlavə istəsən validate və extract metodları da əlavə edə bilərik
 }

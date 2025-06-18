@@ -1,10 +1,13 @@
 package com.example.healthcare.service;
 
+import com.example.healthcare.model.Appointment;
 import com.example.healthcare.model.Doctor;
+import com.example.healthcare.repository.AppointmentRepository;
 import com.example.healthcare.repository.DoctorRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,9 +16,11 @@ import java.util.List;
 public class DoctorService {
 
     private final DoctorRepository doctorRepository;
+    private final AppointmentRepository appointmentRepository;
 
-    public DoctorService(DoctorRepository doctorRepository) {
+    public DoctorService(DoctorRepository doctorRepository, AppointmentRepository appointmentRepository) {
         this.doctorRepository = doctorRepository;
+        this.appointmentRepository = appointmentRepository;
     }
 
     public List<Doctor> getAllDoctors() {
@@ -26,18 +31,28 @@ public class DoctorService {
         return doctorRepository.save(doctor);
     }
 
-    // ✅ Yeni metod: Müəyyən tarix üçün həkimin boş saatlarını qaytarır
+    // ✅ Bu metod həkimin həmin gün üçün boş vaxtlarını qaytarır (bron olunmuş saatlar çıxılır)
     public List<String> getAvailableTimes(Long doctorId, LocalDate date) {
         List<String> availableTimes = new ArrayList<>();
 
-        // Sadə nümunə saatları (10:00 - 17:00 arası hər saat üçün boşluq)
+        // 10:00-dan 17:00-a qədər hər saat üçün zaman əlavə et
         for (int hour = 10; hour <= 17; hour++) {
-            LocalTime time = LocalTime.of(hour, 0);
-            availableTimes.add(time.toString());
+            availableTimes.add(LocalTime.of(hour, 0).toString());
         }
 
-        // Burada istəsən "appointmentRepository"-ni əlavə edib artıq bron olunmuş saatları çıxara bilərsən.
-        // Bu, demo versiyadır və sən bu hissəni daha da inkişaf etdirə bilərsən.
+        // Həmin tarix və həkim üçün artıq bron olunmuş saatları tap
+        LocalDateTime startOfDay = date.atTime(0, 0);
+        LocalDateTime endOfDay = date.atTime(23, 59);
+
+        List<Appointment> appointments = appointmentRepository
+                .findByDoctorIdAndAppointmentTimeBetween(doctorId, startOfDay, endOfDay);
+
+        List<LocalTime> bookedTimes = appointments.stream()
+                .map(a -> a.getAppointmentTime().toLocalTime())
+                .toList();
+
+        // Bron olunmuş saatları siyahıdan çıx
+        availableTimes.removeIf(bookedTimes::contains);
 
         return availableTimes;
     }

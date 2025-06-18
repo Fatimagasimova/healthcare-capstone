@@ -2,43 +2,51 @@ package com.example.healthcare.controller;
 
 import com.example.healthcare.model.Prescription;
 import com.example.healthcare.service.PrescriptionService;
+import com.example.healthcare.util.TokenUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping("/prescriptions")
+@RequestMapping("/api/doctor")
 public class PrescriptionController {
 
     private final PrescriptionService prescriptionService;
+    private final TokenUtil tokenUtil;
 
-    public PrescriptionController(PrescriptionService prescriptionService) {
+    @Autowired
+    public PrescriptionController(PrescriptionService prescriptionService, TokenUtil tokenUtil) {
         this.prescriptionService = prescriptionService;
+        this.tokenUtil = tokenUtil;
     }
 
-    // Bütün reseptləri gətir
-    @GetMapping
-    public ResponseEntity<List<Prescription>> getAllPrescriptions() {
-        return ResponseEntity.ok(prescriptionService.getAllPrescriptions());
+    // ✅ POST endpoint to create prescription with token as @PathVariable
+    @PostMapping("/prescriptions/{token}")
+    public ResponseEntity<?> createPrescription(
+            @Valid @RequestBody Prescription prescription,
+            @PathVariable String token) {
+
+        if (!tokenUtil.validateToken(token)) {
+            return ResponseEntity.status(401).body("Invalid token");
+        }
+
+        Prescription saved = prescriptionService.savePrescription(prescription);
+        return ResponseEntity.ok(saved);
     }
 
-    // Müəyyən xəstə üçün bütün reseptləri gətir
-    @GetMapping("/patient/{patientId}")
-    public ResponseEntity<List<Prescription>> getPrescriptionsByPatientId(@PathVariable Long patientId) {
-        return ResponseEntity.ok(prescriptionService.getPrescriptionsByPatientId(patientId));
-    }
+    // ✅ GET endpoint to retrieve all prescriptions for a doctor (by token)
+    @GetMapping("/prescriptions/{token}")
+    public ResponseEntity<?> getPrescriptionsByDoctor(
+            @PathVariable String token) {
 
-    // Yeni resept əlavə et
-    @PostMapping
-    public ResponseEntity<Prescription> createPrescription(@RequestBody Prescription prescription) {
-        return ResponseEntity.ok(prescriptionService.createPrescription(prescription));
-    }
+        if (!tokenUtil.validateToken(token)) {
+            return ResponseEntity.status(401).body("Invalid token");
+        }
 
-    // Resepti ID ilə sil
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePrescription(@PathVariable Long id) {
-        prescriptionService.deletePrescription(id);
-        return ResponseEntity.noContent().build();
+        List<Prescription> prescriptions = prescriptionService.getPrescriptionsByDoctorToken(token);
+        return ResponseEntity.ok(prescriptions);
     }
 }

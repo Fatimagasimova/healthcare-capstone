@@ -31,4 +31,10 @@ public class AppointmentService {
     public void deleteAppointment(Long id) {
         appointmentRepository.deleteById(id);
     }
+
+    // ✅ Tam tələblərə uyğun yeni metod
+    public Appointment bookAppointment(Appointment appointment) {
+        // Burada əlavə yoxlamalar da əlavə edilə bilər (məsələn, vaxt uyğunluğu)
+        return appointmentRepository.save(appointment);
+    }
 }

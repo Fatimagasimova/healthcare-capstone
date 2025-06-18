@@ -9,11 +9,12 @@ import java.util.Optional;
 @Repository
 public interface PatientRepository extends JpaRepository<Patient, Long> {
 
-    // İstəyə uyğun əlavə metodlar:
-
-    // E-poçt ilə xəstəni tap (login üçün istifadə oluna bilər)
+    // E-poçt ilə xəstəni tap (login üçün)
     Optional<Patient> findByEmail(String email);
 
     // Ad və soyad ilə xəstəni axtar
     Optional<Patient> findByFirstNameAndLastName(String firstName, String lastName);
+
+    // ✅ Əlavə: Email və ya telefon nömrəsinə görə axtarış
+    Optional<Patient> findByEmailOrPhoneNumber(String email, String phoneNumber);
 }
